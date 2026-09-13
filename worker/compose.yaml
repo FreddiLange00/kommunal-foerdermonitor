@@ -1,0 +1,13 @@
+services:
+  runner:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - runner-state:/state
+    mem_limit: 256m
+volumes:
+  runner-state:

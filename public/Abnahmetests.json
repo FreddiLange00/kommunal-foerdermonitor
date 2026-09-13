@@ -1,0 +1,160 @@
+{
+  "testVersion": "1.0.0",
+  "executedAt": "2026-09-13T16:36:38.015Z",
+  "scope": "Synthetic executable acceptance cases and SQLite integration. No real program was human-reviewed by these tests.",
+  "total": 36,
+  "passed": 36,
+  "failed": 0,
+  "cases": [
+    {
+      "name": "01 Fehlende Antragsfrist bleibt unbekannt trotz Richtliniengültigkeit",
+      "status": "PASS"
+    },
+    {
+      "name": "02 Gültige Richtlinie hebt einen Antragsstopp nicht auf",
+      "status": "PASS"
+    },
+    {
+      "name": "03 Module und Aufrufe werden nicht vermischt",
+      "status": "PASS"
+    },
+    {
+      "name": "04 Betrag je Antrag ist kein Betrag je Gebäude",
+      "status": "PASS"
+    },
+    {
+      "name": "05 Erhöhte Förderquote behält ihre Voraussetzungen und Obergrenze",
+      "status": "PASS"
+    },
+    {
+      "name": "06 Schwellenwert unterhalb, auf und oberhalb der Grenze",
+      "status": "PASS"
+    },
+    {
+      "name": "07 Kommunen erlauben keine automatische Ableitung für Gesellschaften",
+      "status": "PASS"
+    },
+    {
+      "name": "08 Fehlende Kumulierungsregel bleibt offen",
+      "status": "PASS"
+    },
+    {
+      "name": "09 Unleserliche PDF-Tabelle sperrt geratene Zahlen",
+      "status": "PASS"
+    },
+    {
+      "name": "10 Vorhandener sachlich falscher Beleg fällt durch",
+      "status": "PASS"
+    },
+    {
+      "name": "11 Konflikte gleicher Geltungsbereiche bleiben sichtbar",
+      "status": "PASS"
+    },
+    {
+      "name": "12 Abruffehler erneuert keine erfolgreiche Sachprüfung",
+      "status": "PASS"
+    },
+    {
+      "name": "13 Neue Version entwertet abhängige Aussagen",
+      "status": "PASS"
+    },
+    {
+      "name": "14 Programm A übernimmt keine Regeln aus Programm B",
+      "status": "PASS"
+    },
+    {
+      "name": "15 Fehlende entscheidende Projektangabe erzeugt gezielte Rückfrage",
+      "status": "PASS"
+    },
+    {
+      "name": "16 Dokumentanweisungen verändern Regeln und Rechte nicht",
+      "status": "PASS"
+    },
+    {
+      "name": "17 Null wird nicht zu 0 oder false",
+      "status": "PASS"
+    },
+    {
+      "name": "18 Ein belegbares freigegebenes Detail erhält eine nutzbare Antwort",
+      "status": "PASS"
+    },
+    {
+      "name": "19 24-Stunden-Grenze gilt getrennt vom Abrufzeitpunkt",
+      "status": "PASS"
+    },
+    {
+      "name": "20 Berliner Zeitplan über beide Zeitumstellungen, dedupliziert je Tag",
+      "status": "PASS"
+    },
+    {
+      "name": "21 Deterministische Cent-Rechnung, Rundung und belegte Grenze",
+      "status": "PASS"
+    },
+    {
+      "name": "22 Abrufziele, Redirect-Hosts und robots werden eingeschränkt",
+      "status": "PASS"
+    },
+    {
+      "name": "23 Historische Frage bekommt keine heutigen Konditionen",
+      "status": "PASS"
+    },
+    {
+      "name": "24 Vollständiger synthetischer Ablauf: Originalabruf → Speicherung → Entwurf → Fachprüfentscheidung → Belegantwort",
+      "status": "PASS"
+    },
+    {
+      "name": "25 Erneuter identischer Abruf dedupliziert Dokumente und erhält sachliche Freigaben",
+      "status": "PASS"
+    },
+    {
+      "name": "26 Abruffehler verändert den erfolgreichen Prüfzeitpunkt in der Datenbank nicht",
+      "status": "PASS"
+    },
+    {
+      "name": "27 Neue Originalfassung invalidiert Antworten und revisioniert den Programmstand",
+      "status": "PASS"
+    },
+    {
+      "name": "28 Fremde Projektunterlagen und Falldaten bleiben für andere Nutzer gesperrt",
+      "status": "PASS"
+    },
+    {
+      "name": "29 Persistente Warteschlange, Wiederaufnahme, Suchlücken und fehlender Anbieter",
+      "status": "PASS"
+    },
+    {
+      "name": "30 Suchbegriffe decken Synonyme außerhalb von Programmtiteln ab",
+      "status": "PASS"
+    },
+    {
+      "name": "31 Benutzerbootstrap erlaubt nur den ersten privaten Eigentümer und keine Selbstzuweisung fremder Rollen",
+      "status": "PASS"
+    },
+    {
+      "name": "32 Unterbrochene Planung wird ohne doppelte Aufträge wieder aufgenommen",
+      "status": "PASS"
+    },
+    {
+      "name": "33 Ausgeschöpfte Lease wird als Ausfall beendet statt endlos neu gestartet",
+      "status": "PASS"
+    },
+    {
+      "name": "34 Technische PDF-Korrektur speichert Herkunft und entzieht abhängige Freigaben",
+      "status": "PASS"
+    },
+    {
+      "name": "35 Reale Startdaten sind ausschließlich ungeprüfte Entwürfe, ohne synthetische Testprogramme",
+      "status": "PASS"
+    },
+    {
+      "name": "36 Fristenfilter verwendet niemals die Gültigkeit des Geltungsbereichs",
+      "status": "PASS"
+    }
+  ],
+  "limitations": [
+    "No external API credentials supplied",
+    "No deployed browser test in this run",
+    "No independently human-reviewed real reference corpus",
+    "General semantic entailment needs human review; lexical checks are conservative"
+  ]
+}

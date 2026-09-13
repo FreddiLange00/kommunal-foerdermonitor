@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `runs_single_active` ON `runs` (1) WHERE "runs"."status" IN ('geplant','läuft');

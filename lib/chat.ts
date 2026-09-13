@@ -1,0 +1,20 @@
+import {FIELDS,type Claim,type Doc,type Scope} from './model';
+import {publishable,scopeMatches,currentStatus} from './controls';
+const intents:Record<string,RegExp>={applicants:/antragsberechtigt|beantragen|berechtigt|rechtsform|kommunale.*gesellschaft/i,measures:/förderfähig|maßnahmen|photovoltaik|wärme|gebäudehülle|hitze|starkregen/i,amount:/förderhöhe|förderquote|prozent|zuschuss.*hoch|wie viel|wieviel|betrag/i,basis:/je gebäude|je antrag|bezugsgröße|netto|brutto|umsatzsteuer/i,deadline:/frist|bis wann|antragsfenster/i,access:/offen|heute|antrag.*stellen|antragsstopp|verfügbar/i,documents:/unterlagen|dokumente|einreichen|nachweise/i,start:/vorhabenbeginn|beauftragen|vergabe|begonnen/i,combination:/kombini|kumul|andere.*förder/i,bundling:/bündel|mehrere.*gebäude|mehrere.*maßnahmen/i,loan:/darlehen|zins|tilgung|laufzeit.*kredit/i,validity:/gültig|richtlinienlaufzeit/i,agency:/zuständig|bewilligungsstelle|projektträger/i,region:/gebiet|bundesland|region/i,summary:/zweck|überblick|zusammenfassung/i};
+export function answerQuestion(input:{question:string;scope:Scope;claims:Claim[];docs:Doc[];project:Record<string,string>;asOf?:string;versionIds?:string[]},now=new Date()){
+ const {scope,question}=input;const keys=Object.entries(intents).filter(([,re])=>re.test(question)).map(([k])=>k);const open:string[]=[];const requested=keys.length?keys:[];
+ const historical=!!input.asOf&&input.asOf!==now.toISOString().slice(0,10);
+ const docs=input.docs.filter(d=>d.programId===scope.programId&&(!input.versionIds?.length||input.versionIds.includes(d.versionId)));
+ let eligible=input.claims.filter(c=>scopeMatches(c.scope,scope)&&requested.includes(c.key));
+ if(historical){eligible=eligible.filter(c=>!!c.scope.validFrom&&!!c.scope.validTo&&c.scope.validFrom<=input.asOf!&&c.scope.validTo>=input.asOf!&&c.approval==='fachlich freigegeben'&&c.information==='Belegt');open.push('Historische Auskunft setzt fachlich bestätigte Geltungszeiträume und eine passende Dokumentfassung voraus.');}
+ else eligible=eligible.filter(c=>publishable(c,docs,now));
+ eligible=eligible.filter(c=>c.evidence.every(e=>docs.some(d=>d.versionId===e.versionId)));
+ const caseQuestion=/\b(wir|unsere?|mein|unserer|unserem|unseren)\b|für.*vorhaben/i.test(question);
+ if(caseQuestion){for(const c of eligible)for(const field of c.requiredProjectFields)if(!input.project[field])open.push(`Welche ${field} hat der Antragsteller bzw. das Vorhaben?`);if(requested.includes('applicants')&&!input.project.Rechtsform)open.push('Welche Rechtsform stellt den Antrag: Kommune, Eigenbetrieb oder kommunale Gesellschaft?');}
+ if(!requested.length)open.push('Bitte benennen Sie den gewünschten Aspekt, z. B. Antragsberechtigung, Unterlagen, Förderhöhe oder Frist. Freie rechtliche Auslegungen benötigen eine Fachprüfung.');
+ for(const key of requested)if(!eligible.some(c=>c.key===key))open.push(`${FIELDS[key].label}: keine für diesen Geltungsbereich und Zeitpunkt fachlich freigegebene, ausreichend aktuelle Aussage verfügbar.`);
+ const statements=eligible.map(c=>({claimId:c.id,field:FIELDS[c.key].label,text:String(c.value),conditions:c.conditions,evidence:c.evidence,freshness:historical?'Historischer Stand':currentStatus(c,docs,now)}));
+ const direct=statements.length?'Zu Ihrer Frage sind folgende Programmangaben fachlich freigegeben.': 'Das lässt sich anhand der vorliegenden Quellen nicht abschließend beantworten.';
+ if(caseQuestion)open.push('Die Anwendung auf Ihr konkretes Vorhaben ist eine gesonderte Fachprüfung. Aus einer allgemeinen Regel folgt keine Bewilligung.');
+ return {direct,statements,projectFacts:Object.entries(input.project).map(([key,value])=>({key,value,origin:'Nutzerangabe, nicht als Programmregel geprüft'})),open:[...new Set(open)],scope,asOf:input.asOf??now.toISOString().slice(0,10),documentStand:docs.map(d=>({id:d.id,versionId:d.versionId,title:d.title,url:d.url,retrievedAt:d.retrievedAt,reviewedAt:d.reviewedAt})),generatedAt:now.toISOString(),mode:'Deterministische Belegauskunft; keine freie KI-Auslegung'};
+}
