@@ -114,7 +114,7 @@ D1 und R2 sind produktive Speicherdienste. Automatische unabhängige Backups, Au
 
 ## Ausgeführte Abnahmetests und Grenzen
 
-Die maschinenlesbaren Einzelresultate einschließlich Ausführungszeit stehen in `test-results.json` bzw. in der Oberfläche unter „Abnahmetests“. 36 Tests decken die ausdrücklich geforderten Fehlerklassen ab: fehlende Frist, Antragsstopp, Modul-/Bezugsgrößen-/Rechtsformtrennung, erhöhte Quote, Schwellenwerte, Kumulation, PDF-Unklarheit, unpassende Belege, Konflikte, Abruffehler, neue Fassungen, Programmisolation, fehlende Falldaten, Dokumentanweisungen, private Daten, DST, Centrechnung sowie Queue-/Lease-Wiederaufnahme. Ein synthetischer vollständiger Ablauf prüft Abruf → Speicherung → Entwurf → ausdrückliche simulierte Fachfreigabe → belegbare Teilantwort.
+Die maschinenlesbaren Einzelresultate einschließlich Ausführungszeit stehen in `test-results.json` bzw. in der Oberfläche unter „Abnahmetests“. 40 Tests decken die ausdrücklich geforderten Fehlerklassen ab: fehlende Frist, Antragsstopp, Modul-/Bezugsgrößen-/Rechtsformtrennung, erhöhte Quote, Schwellenwerte, Kumulation, PDF-Unklarheit, unpassende Belege, Konflikte, Abruffehler, neue Fassungen, Programmisolation, fehlende Falldaten, Dokumentanweisungen, private Daten, DST, Centrechnung sowie Queue-/Lease-Wiederaufnahme. Ein synthetischer vollständiger Ablauf prüft Abruf → Speicherung → Entwurf → ausdrückliche simulierte Fachfreigabe → belegbare Teilantwort.
 
 Diese Prüfungen verwenden synthetische Quellen und simuliertes Netzwerk. Sie belegen nicht die Richtigkeit der sechs realen Entwürfe. Nicht durchgeführt: unabhängige fachliche Abnahme eines repräsentativen realen Referenzbestands, Live-Brave-/OpenAI-/PDF-Integration, Dauerbetrieb, Browser-Interaktionstest, Accessibility-Audit, Lasttest, Sicherheitsreview und Wiederherstellungsprobe.
 
@@ -142,3 +142,9 @@ Die 3-EUR-Tagesreservierung begrenzt geschätzte Such-/Modellkosten anhand der k
 ## Versionierte Arbeitsanweisungen
 
 `docs/prompts/recherche.v1.0.0.md`, `extraktion.v1.0.0.md`, `aussagenpruefung.v1.0.0.md`, `chat.v1.0.0.md` trennen die Phasen. Nur der Extraktionsprompt wird derzeit tatsächlich an ein optionales Sprachmodell gesendet. Die übrigen Regeln werden durch deterministische Verarbeitung und Fachprüfung unterstützt; ihre Existenz bedeutet keinen implementierten zweiten KI-Prüfer.
+
+## Nachtrag: vorhandene API-Schlüssel eingeben
+
+Administration: Unter Betrieb & Team → API-Schlüssel sicher hinterlegen die vorhandenen OpenAI- und Brave-Schlüssel eintragen. Sie werden mit AES-256-GCM, zufälliger Nonce und Anbieterbindung verschlüsselt in D1 gespeichert. PROVIDER_VAULT_KEY liegt getrennt als Sites-Servergeheimnis. Nur autorisierte Serververarbeitung entschlüsselt; Antworten und Ereignisse enthalten keine Schlüssel. Verschlüsselung schützt nicht vor vollständiger Kompromittierung des laufenden Servers. Für Wiederherstellung werden Datenbank und separat gesicherter Masterschlüssel benötigt. Masterschlüssel nicht unkoordiniert rotieren.
+
+Leere Schlüsselfelder erhalten bestehende Werte. Die Eingabe ersetzt nur ausdrücklich übermittelte Schlüssel. OpenAI-Modell-ID gesondert erfassen; Speicherrechte der Brave-Suche ausdrücklich bestätigen. Speichern ist kein erfolgreicher Anbieterfunktionstest und startet noch keinen täglichen Zeitplan. Neue Runtime-Aufträge lesen die gespeicherten Zugänge ohne erneutes Deployment. Bereits als Server-Umgebungsvariable konfigurierte API-Schlüssel bleiben Fallback, soweit kein verschlüsselter Wert hinterlegt ist.

@@ -1,9 +1,9 @@
 {
   "testVersion": "1.0.0",
-  "executedAt": "2026-09-13T16:36:38.015Z",
+  "executedAt": "2026-09-14T06:06:34.400Z",
   "scope": "Synthetic executable acceptance cases and SQLite integration. No real program was human-reviewed by these tests.",
-  "total": 36,
-  "passed": 36,
+  "total": 40,
+  "passed": 40,
   "failed": 0,
   "cases": [
     {
@@ -148,6 +148,22 @@
     },
     {
       "name": "36 Fristenfilter verwendet niemals die Gültigkeit des Geltungsbereichs",
+      "status": "PASS"
+    },
+    {
+      "name": "37 Schlüsseltresor verschlüsselt zufällig und bindet Anbieter",
+      "status": "PASS"
+    },
+    {
+      "name": "38 Nur Administration darf Zugangsdaten speichern",
+      "status": "PASS"
+    },
+    {
+      "name": "39 Schlüssel bleiben aus API-Ergebnis, Audit und Klartextspeicher entfernt",
+      "status": "PASS"
+    },
+    {
+      "name": "40 Leere ausgelassene Schlüssel bleiben erhalten; keine Freigabe durch Speicherung",
       "status": "PASS"
     }
   ],

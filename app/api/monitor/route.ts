@@ -6,9 +6,10 @@ import {blankScope,claimSchema,scopeSchema,REGIONS,THEMES,type User} from '@/lib
 import {answerQuestion} from '@/lib/chat';
 import {publishable,safeTarget} from '@/lib/controls';
 import {z} from 'zod';
+import {saveProviders,providerSecrets} from '@/lib/provider-vault';
 export const dynamic='force-dynamic';
 const reply=(data:any,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
-function runtime(){const e=env as unknown as RuntimeSecrets&{DB:D1Database;BUCKET:R2Bucket};if(!e.DB||!e.BUCKET)throw new HttpError(503,'Datenbank oder Dateispeicher ist derzeit nicht erreichbar.');return e;}
+function runtime(){const e=env as unknown as RuntimeSecrets&{DB:D1Database;BUCKET:R2Bucket;PROVIDER_VAULT_KEY?:string};if(!e.DB||!e.BUCKET)throw new HttpError(503,'Datenbank oder Dateispeicher ist derzeit nicht erreichbar.');return {...e};}
 async function authenticate(repo:Repository){const identity=await getChatGPTUser();if(!identity)throw new HttpError(401,'Bitte mit ChatGPT anmelden.');return repo.identify({id:identity.userId,email:identity.email,name:identity.displayName});}
 function failure(e:unknown){if(e instanceof HttpError)return reply({error:e.message},e.status);if(e instanceof z.ZodError)return reply({error:e.issues.map(i=>i.path.join('.')+': '+i.message).join('; ')},422);console.error('monitor operation failed',e instanceof Error?e.name:'Error');return reply({error:'Der Vorgang konnte nicht abgeschlossen werden. Eingaben bleiben erhalten; bitte erneut versuchen.'},500);}
 export async function GET(req:Request){try{const e=runtime(),repo=new Repository(e.DB,e.BUCKET),u=await authenticate(repo);await repo.seed();const q=new URL(req.url).searchParams;
@@ -18,16 +19,17 @@ export async function GET(req:Request){try{const e=runtime(),repo=new Repository
  if(q.get('view')==='project'){const project=await repo.project(q.get('id')??'',u);return reply({project,uploads:(await repo.rows('SELECT id,data FROM uploads WHERE project_id=? AND owner_id=?',project.id,u.id)).map(x=>({id:x.id,...JSON.parse(x.data)})),correspondence:(await repo.rows('SELECT * FROM correspondence WHERE project_id=? AND owner_id=?',project.id,u.id)).map(x=>({...x,data:JSON.parse(x.data)}))});}
  if(q.get('view')==='chats'){const d=await repo.data(q.get('programId')??'');const p=d.programs.find(p=>p.id===q.get('programId'));return reply((await repo.rows('SELECT * FROM chats WHERE owner_id=? AND program_id=? ORDER BY at DESC LIMIT 20',u.id,q.get('programId'))).map(x=>({id:x.id,at:x.at,question:JSON.parse(x.data).question,invalidated:x.revision!==p?.revision,notice:'Frühere Antworten sind Verlauf, keine Quellen. Für den aktuellen Stand erneut fragen.'})));}
  if(q.get('view')==='export'){const d=await repo.data(q.get('programId')??undefined);const claims=d.claims.filter(c=>publishable(c,d.docs));return new Response(json({exportedAt:iso(),programs:d.programs.filter(p=>!q.get('programId')||p.id===q.get('programId')),claims,questions:d.questions,documents:d.docs.map(({text,...x})=>x),note:'Nur fachlich freigegebene aktuelle Aussagen; offene Punkte bleiben erhalten.'}),{headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="foerdermonitor-export.json"','Cache-Control':'no-store'}});}
- const result=await repo.snapshot(u);return reply({...result,capabilities:{webSearch:!!e.BRAVE_SEARCH_API_KEY&&e.BRAVE_STORAGE_RIGHTS==='true',aiExtraction:!!e.OPENAI_API_KEY&&!!e.OPENAI_MODEL,pdfExtraction:!!e.PDF_SERVICE_URL&&!!e.PDF_SERVICE_TOKEN,runnerCredential:!!e.RUNNER_TOKEN,schedulerHosted:false}});
+ const providers=await providerSecrets(repo,e);const result=await repo.snapshot(u);return reply({...result,providerModel:providers.OPENAI_MODEL??'',providerStorageRights:providers.BRAVE_STORAGE_RIGHTS==='true',capabilities:{vaultReady:!!e.PROVIDER_VAULT_KEY,webSearch:!!providers.BRAVE_SEARCH_API_KEY&&providers.BRAVE_STORAGE_RIGHTS==='true',aiExtraction:!!providers.OPENAI_API_KEY&&!!providers.OPENAI_MODEL,pdfExtraction:!!e.PDF_SERVICE_URL&&!!e.PDF_SERVICE_TOKEN,runnerCredential:!!e.RUNNER_TOKEN,schedulerHosted:false}});
  }catch(e){return failure(e);}}
 export async function POST(req:Request){try{const e=runtime(),repo=new Repository(e.DB,e.BUCKET);if(Number(req.headers.get('content-length')??0)>1_200_000)throw new HttpError(413,'Eingabe zu groß.');const raw=await req.text();if(raw.length>1_200_000)throw new HttpError(413,'Eingabe zu groß.');const body=JSON.parse(raw);const action=z.string().parse(body.action);
  // The private Sites gateway still applies. A service token does not bypass it.
  const runner=action==='tick'&&e.RUNNER_TOKEN&&req.headers.get('authorization')===`Bearer ${e.RUNNER_TOKEN}`;
- if(runner)return reply(await tick(repo,e,true));
+ if(runner)return reply(await tick(repo,await providerSecrets(repo,e),true));
  const origin=req.headers.get('origin');if(origin&&origin!==new URL(req.url).origin)throw new HttpError(403,'Ungültiger Anforderungsursprung.');const u=await authenticate(repo);await repo.seed();
+ if(action==='save_providers'){if(origin!==new URL(req.url).origin)throw new HttpError(403,'Schlüsseleingabe nur aus der Anwendung zulässig.');return reply(await saveProviders(repo,u,body.providers,e.PROVIDER_VAULT_KEY));}
  if(action==='run'){repo.require(u,'research');return reply(await enqueueRun(repo));}
- if(action==='tick'){repo.require(u,'research');return reply(await tick(repo,e));}
- if(action==='extract'){repo.require(u,'edit');return reply(await extractVersion(repo,z.string().parse(body.versionId),e,u));}
+ if(action==='tick'){repo.require(u,'research');return reply(await tick(repo,await providerSecrets(repo,e)));}
+ if(action==='extract'){repo.require(u,'edit');return reply(await extractVersion(repo,z.string().parse(body.versionId),await providerSecrets(repo,e),u));}
  if(action==='propose')return reply(await repo.propose(claimSchema.parse(body.claim),u));
  if(action==='document_review')return reply(await repo.correctExtraction(z.string().parse(body.versionId),u,z.object({text:z.string().min(10).max(500000),pages:z.array(z.object({pageIndex:z.number().int().nonnegative(),printedPage:z.string().nullable(),text:z.string(),tables:z.array(z.unknown()).optional()}).passthrough()).max(150),publishedAt:z.string().nullable(),validFrom:z.string().nullable(),validTo:z.string().nullable(),versionLabel:z.string().nullable(),reason:z.string().min(15),originalVerified:z.literal(true)}).parse(body.document)));
  if(action==='review'){return reply(await repo.review(z.string().parse(body.claimId),u,z.enum(['approve','return']).parse(body.decision),z.string().parse(body.reason),z.object({context:z.boolean(),scope:z.boolean(),exceptions:z.boolean(),visual:z.boolean()}).parse(body.attest)));}
