@@ -1,9 +1,9 @@
 {
   "testVersion": "1.0.0",
-  "executedAt": "2026-09-14T06:06:34.400Z",
+  "executedAt": "2026-09-14T06:17:23.508Z",
   "scope": "Synthetic executable acceptance cases and SQLite integration. No real program was human-reviewed by these tests.",
-  "total": 40,
-  "passed": 40,
+  "total": 42,
+  "passed": 42,
   "failed": 0,
   "cases": [
     {
@@ -164,6 +164,14 @@
     },
     {
       "name": "40 Leere ausgelassene Schlüssel bleiben erhalten; keine Freigabe durch Speicherung",
+      "status": "PASS"
+    },
+    {
+      "name": "41 Fehlgeschlagener Modelltest aktiviert keinen Zeitplan und verrät keine Schlüssel",
+      "status": "PASS"
+    },
+    {
+      "name": "42 Erfolgreicher Verbindungstest aktiviert einmalig den Zeitplan",
       "status": "PASS"
     }
   ],

@@ -1,8 +1,9 @@
+import {checkProviders} from './provider-check';
 import {Repository,iso,uid,json,HttpError} from './repository';
 import {REGIONS,THEMES,blankScope,unknownClaim,FIELDS,type Doc,type User} from './model';
 import {safeTarget,normalize,berlinParts,scheduleDue} from './controls';
 import {EXTRACTION_PROMPT,PROMPT_VERSION} from './prompts';
-export type RuntimeSecrets={BRAVE_SEARCH_API_KEY?:string;BRAVE_STORAGE_RIGHTS?:string;OPENAI_API_KEY?:string;OPENAI_MODEL?:string;RUNNER_TOKEN?:string;PDF_SERVICE_URL?:string;PDF_SERVICE_TOKEN?:string};
+export type RuntimeSecrets={PROVIDER_ACTIVATION?:string;PROVIDER_CHECK_REVISION?:string;BRAVE_SEARCH_API_KEY?:string;BRAVE_STORAGE_RIGHTS?:string;OPENAI_API_KEY?:string;OPENAI_MODEL?:string;RUNNER_TOKEN?:string;PDF_SERVICE_URL?:string;PDF_SERVICE_TOKEN?:string};
 export function queriesFor(region:string,theme:string){const synonyms:Record<string,string[]>={'Energetische Sanierung':['Gebäudehülle Wärmeversorgung Energieeffizienz','Sanierung Nichtwohngebäude Beratung Planung'],'Klimaschutz':['Klimaschutz Konzepte Energieberatung','Treibhausgas kommunale Infrastruktur'],'Klimaanpassung':['Hitze Starkregen Entsiegelung','Klimaanpassung wassersensible Stadtentwicklung'],'Erneuerbare Energien':['Photovoltaik Speicher Solarenergie','erneuerbare Wärme Wärmenetze']};return synonyms[theme].map(s=>`${region} Förderung Förderaufruf Zuschuss Darlehen ${s}`);}
 export async function enqueueRun(repo:Repository,automatic=false){
  const config=await repo.config(),at=iso(),day=berlinParts(new Date()).day;
@@ -81,7 +82,7 @@ async function searchJob(repo:Repository,data:any,secrets:RuntimeSecrets){
  await repo.exec('UPDATE searches SET status=?,at=?,data=? WHERE id=?','durchgeführt',iso(),json({provider:'Brave Search',results:items.length}),data.searchId);return {results:items.length};
 }
 export async function tick(repo:Repository,secrets:RuntimeSecrets,automatic=false){
- const config=await repo.config();if(automatic){await repo.exec('INSERT INTO settings(key,data) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET data=excluded.data','runner-heartbeat',json({at:iso()}));const last=await repo.one('SELECT day_key FROM runs WHERE day_key IS NOT NULL ORDER BY day_key DESC LIMIT 1');if(scheduleDue(new Date(),last?.day_key??null,config.hour,config.minute))await enqueueRun(repo,true);}
+ let config=await repo.config();if(automatic&&secrets.PROVIDER_ACTIVATION==='true'){await checkProviders(repo,secrets,kind=>reserveBudget(repo,kind,kind==='search'?config.searchEuroPerCall:config.modelEuroPerCall,config));config=await repo.config();}if(automatic){await repo.exec('INSERT INTO settings(key,data) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET data=excluded.data','runner-heartbeat',json({at:iso()}));const last=await repo.one('SELECT day_key FROM runs WHERE day_key IS NOT NULL ORDER BY day_key DESC LIMIT 1');if(scheduleDue(new Date(),last?.day_key??null,config.hour,config.minute))await enqueueRun(repo,true);}
  const at=iso();
  for(const r of await repo.rows("SELECT * FROM runs WHERE status='geplant'")){const info=JSON.parse(r.data);if(info.plan)await completePlan(repo,r.id,r.started_at,info.plan);}
  await repo.exec("UPDATE jobs SET status=CASE WHEN attempts>=? THEN 'failed' ELSE 'queued' END,error='Lease abgelaufen; vorheriger Prozess ausgefallen',lease_token=NULL,lease_until=NULL WHERE status='running' AND lease_until<?",config.maxAttempts,at);
